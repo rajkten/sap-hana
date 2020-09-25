@@ -3,6 +3,8 @@ Description:
 
   Define local variables.
 */
+
+/*
 variable prefix {
   type        = string
   description = "Resource naming prefix"
@@ -27,10 +29,19 @@ variable keyvault_names {
   type        = list
   description = "Keyvault name list"
 }
+*/
+
+variable naming {
+  description = "naming convention"
+}
 
 
 // Set defaults
 locals {
+  storageaccount_names = var.naming.storageaccount_names.DEPLOYER
+  virtualmachine_names = var.naming.virtualmachine_names.DEPLOYER
+  keyvault_names       = var.naming.keyvault_names.DEPLOYER
+  resource_suffixes    = var.naming.resource_extension
 
 
   // Post fix for all deployed resources
@@ -43,22 +54,22 @@ locals {
 
   region             = try(var.infrastructure.region, "")
   vnet_mgmt_tempname = try(local.vnet_mgmt.name, "")
-  prefix             = try(var.infrastructure.resource_group.name, var.prefix)
-  rg_name            = try(var.infrastructure.resource_group.name, format("%s%s", local.prefix, var.resource_suffixes["deployer-rg"]))
+  prefix             = try(var.infrastructure.resource_group.name, var.naming.prefix.DEPLOYER)
+  rg_name            = try(var.infrastructure.resource_group.name, format("%s%s", local.prefix, local.resource_suffixes["deployer-rg"]))
 
   // Management vnet
   vnet_mgmt        = try(var.infrastructure.vnets.management, {})
   vnet_mgmt_arm_id = try(local.vnet_mgmt.arm_id, "")
   vnet_mgmt_exists = length(local.vnet_mgmt_arm_id) > 0 ? true : false
 
-  vnet_mgmt_name = local.vnet_mgmt_exists ? split("/", local.vnet_mgmt_arm_id)[8] : format("%s%s", local.prefix, var.resource_suffixes["vnet"])
+  vnet_mgmt_name = local.vnet_mgmt_exists ? split("/", local.vnet_mgmt_arm_id)[8] : format("%s%s", local.prefix, local.resource_suffixes["vnet"])
   vnet_mgmt_addr = local.vnet_mgmt_exists ? "" : try(local.vnet_mgmt.address_space, "10.0.0.16/28")
 
   // Management subnet
   sub_mgmt          = try(local.vnet_mgmt.subnet_mgmt, {})
   sub_mgmt_arm_id   = try(local.sub_mgmt.arm_id, "")
   sub_mgmt_exists   = length(local.sub_mgmt_arm_id) > 0 ? true : false
-  sub_mgmt_name     = local.sub_mgmt_exists ? "" : try(local.sub_mgmt.name, format("%s%s", local.prefix, var.resource_suffixes["deployer-subnet"]))
+  sub_mgmt_name     = local.sub_mgmt_exists ? "" : try(local.sub_mgmt.name, format("%s%s", local.prefix, local.resource_suffixes["deployer-subnet"]))
   sub_mgmt_prefix   = local.sub_mgmt_exists ? "" : try(local.sub_mgmt.prefix, "10.0.0.16/28")
   sub_mgmt_deployed = try(local.sub_mgmt_exists ? data.azurerm_subnet.subnet_mgmt[0] : azurerm_subnet.subnet_mgmt[0], null)
 
@@ -66,7 +77,7 @@ locals {
   sub_mgmt_nsg             = try(local.sub_mgmt.nsg, {})
   sub_mgmt_nsg_exists      = try(local.sub_mgmt_nsg.is_existing, false)
   sub_mgmt_nsg_arm_id      = local.sub_mgmt_nsg_exists ? try(local.sub_mgmt_nsg.arm_id, "") : ""
-  sub_mgmt_nsg_name        = local.sub_mgmt_nsg_exists ? "" : try(local.sub_mgmt_nsg.name, format("%s%s", local.prefix, var.resource_suffixes["deployer-subnet-nsg"]))
+  sub_mgmt_nsg_name        = local.sub_mgmt_nsg_exists ? "" : try(local.sub_mgmt_nsg.name, format("%s%s", local.prefix, local.resource_suffixes["deployer-subnet-nsg"]))
   deployer_pip_list        = azurerm_public_ip.deployer[*].ip_address
   sub_mgmt_nsg_allowed_ips = local.sub_mgmt_nsg_exists ? [] : try(concat(local.sub_mgmt_nsg.allowed_ips, local.deployer_pip_list), ["0.0.0.0/0"])
   sub_mgmt_nsg_deployed    = try(local.sub_mgmt_nsg_exists ? data.azurerm_network_security_group.nsg_mgmt[0] : azurerm_network_security_group.nsg_mgmt[0], null)
@@ -78,7 +89,7 @@ locals {
   enable_deployers = length(local.deployer_input) > 0 ? true : false
   deployers = [
     for idx, deployer in local.deployer_input : {
-      "name"                 = var.virtualmachine_names[idx],
+      "name"                 = local.virtualmachine_names[idx],
       "destroy_after_deploy" = true,
       "size"                 = try(deployer.size, "Standard_D2s_v3"),
       "disk_type"            = try(deployer.disk_type, "StandardSSD_LRS")

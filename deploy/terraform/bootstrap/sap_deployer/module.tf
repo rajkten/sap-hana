@@ -4,17 +4,20 @@ Description:
   Example to deploy deployer(s) using local backend.
 */
 module "sap_deployer" {
-  source               = "../../terraform-units/modules/sap_deployer"
-  infrastructure       = var.infrastructure
-  deployers            = var.deployers
-  options              = var.options
-  ssh-timeout          = var.ssh-timeout
-  sshkey               = var.sshkey
+  source         = "../../terraform-units/modules/sap_deployer"
+  infrastructure = var.infrastructure
+  deployers      = var.deployers
+  options        = var.options
+  ssh-timeout    = var.ssh-timeout
+  sshkey         = var.sshkey
+  naming         = module.sap_namegenerator.naming
+  /*
   prefix               = module.sap_namegenerator.prefix["DEPLOYER"]
   storageaccount_names = module.sap_namegenerator.storageaccount_names["DEPLOYER"]
   virtualmachine_names = module.sap_namegenerator.virtualmachine_names["DEPLOYER"]
   keyvault_names       = module.sap_namegenerator.keyvault_names["DEPLOYER"]
   resource_suffixes    = module.sap_namegenerator.resource_extensions
+  */
 }
 
 module "sap_namegenerator" {

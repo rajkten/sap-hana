@@ -52,7 +52,7 @@ data "azurerm_subnet" "subnet_mgmt" {
 // Creates boot diagnostics storage account for Deployer
 resource "azurerm_storage_account" "deployer" {
   count                     = local.enable_deployers ? 1 : 0
-  name                      = var.storageaccount_names[0]
+  name                      = local.storageaccount_names
   resource_group_name       = azurerm_resource_group.deployer[0].name
   location                  = azurerm_resource_group.deployer[0].location
   account_replication_type  = "LRS"
