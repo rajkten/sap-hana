@@ -1,13 +1,13 @@
 output "tfstate_storage_account" {
-  value = local.sa_tfstate_name
+  value = local.sa_tfstate
 }
 
 output "sapbits_storage_account" {
-  value = local.sa_sapbits_name
+  value = local.sa_sapbits
 }
 
 output "storagecontainer_tfstate" {
-  value = local.sa_tfstate_container_name
+  value = local.storagecontainer_tfstate
 }
 
 output "storagecontainer_sapbits" {
