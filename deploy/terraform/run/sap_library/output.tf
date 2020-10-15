@@ -4,8 +4,7 @@ output "tfstate_storage_account" {
 }
 
 output "sapbits_storage_account_name" {
-  sensitive = true
-  value     = module.sap_library.sapbits_storage_account_name
+  value = module.sap_library.sapbits_storage_account_name
 }
 
 output "sapbits_sa_resource_group_name" {
@@ -20,11 +19,6 @@ output "storagecontainer_tfstate" {
 output "storagecontainer_sapbits_name" {
   sensitive = true
   value     = module.sap_library.storagecontainer_sapbits_name
-}
-
-output "storagecontainer_sapbits_sa_name" {
-  sensitive = true
-  value     = module.sap_library.storagecontainer_sapbits_sa_name
 }
 
 output "fileshare_sapbits_name" {

@@ -18,10 +18,6 @@ output "storagecontainer_sapbits_name" {
   value = local.storagecontainer_sapbits_name
 }
 
-output "storagecontainer_sapbits_sa_name" {
-  value = local.sa_sapbits_exists ? data.azurerm_storage_account.storage_sapbits[0].name : azurerm_storage_account.storage_sapbits[0].name
-}
-
 output "fileshare_sapbits_name" {
   value = local.fileshare_sapbits_name
 }

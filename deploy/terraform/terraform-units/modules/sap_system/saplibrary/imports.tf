@@ -23,5 +23,5 @@ data "azurerm_storage_account" "saplibrary" {
 data "azurerm_storage_container" "storagecontainer-sapbits" {
   count                = local.blob_container_exists ? 1 : 0
   name                 = data.terraform_remote_state.saplibrary.outputs.storagecontainer_sapbits_name
-  storage_account_name = data.terraform_remote_state.saplibrary.outputs.storagecontainer_sapbits_sa_name
+  storage_account_name = data.terraform_remote_state.saplibrary.outputs.sapbits_storage_account_name
 }
