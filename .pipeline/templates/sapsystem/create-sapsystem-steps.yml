@@ -4,7 +4,7 @@ steps:
 
       echo "=== Logon deployer ==="
       ls -ltr ~/.ssh
-      ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=$(ssh_timeout_s) "$(username)"@"$(publicIP)" '
+      ssh -vvv -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=$(ssh_timeout_s) "$(username)"@"$(publicIP)" '
       source /etc/profile.d/deploy_server.sh
 
       # Modify environment value so it starts with u and with length of 5
