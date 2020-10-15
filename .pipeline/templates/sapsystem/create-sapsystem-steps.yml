@@ -3,7 +3,7 @@ steps:
       set -e
 
       echo "=== Logon deployer ==="
-      cat ~/.ssh/id_rsa
+      ls -ltr ~/.ssh
       ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=$(ssh_timeout_s) "$(username)"@"$(publicIP)" '
       source /etc/profile.d/deploy_server.sh
 
