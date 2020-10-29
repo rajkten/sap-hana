@@ -171,12 +171,13 @@ locals {
   }
 
   //Observer VM
-  observer                = try(local.anydb.observer, {})
-  deploy_observer         = upper(local.anydb_platform) == "ORACLE" && local.anydb_ha
-  observer_size           = "Standard_D4s_v3"
-  observer_authentication = local.authentication
-  observer_custom_image   = local.anydb_custom_image
-  observer_os             = local.anydb_os
+  observer                 = try(local.anydb.observer, {})
+  deploy_observer          = upper(local.anydb_platform) == "ORACLE" && local.anydb_ha
+  observer_size            = "Standard_D4s_v3"
+  observer_authentication  = local.authentication
+  observer_custom_image    = local.anydb_custom_image
+  observer_custom_image_id = local.anydb_os.source_image_id
+  observer_os              = local.anydb_os
 
   // Update database information with defaults
   anydb_database = merge(local.anydb,
@@ -196,7 +197,7 @@ locals {
   )
 
   dbnodes = flatten([[for idx, dbnode in try(local.anydb.dbnodes, [{}]) : {
-    name         = try("${dbnode.name}-0", format("%s%s%s%s", local.prefix, local.prefix, var.naming.separator,local.virtualmachine_names[idx], local.resource_suffixes.vm))
+    name         = try("${dbnode.name}-0", format("%s%s%s%s", local.prefix, local.prefix, var.naming.separator, local.virtualmachine_names[idx], local.resource_suffixes.vm))
     computername = try("${dbnode.name}-0", local.computer_names[idx], local.resource_suffixes.vm)
     role         = try(dbnode.role, "worker"),
     db_nic_ip    = lookup(dbnode, "db_nic_ips", [null, null])[0]

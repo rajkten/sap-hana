@@ -1,9 +1,3 @@
-data "azurerm_subnet" "observer" {
-  count                = local.zonal_deployment ? (local.sub_db_exists ? 1 : 0) : 0
-  name                 = split("/", local.sub_db_arm_id)[10]
-  resource_group_name  = split("/", local.sub_db_arm_id)[4]
-  virtual_network_name = split("/", local.sub_db_arm_id)[8]
-}
 
 # Create observer VM
 resource "azurerm_network_interface" "observer" {
@@ -15,7 +9,7 @@ resource "azurerm_network_interface" "observer" {
 
   ip_configuration {
     name                          = "IPConfig1"
-    subnet_id                     = data.azurerm_subnet.observer[0].id
+    subnet_id                     = local.sub_db_exists ? data.azurerm_subnet.anydb[0].id : azurerm_subnet.anydb[0].id
     private_ip_address            = try(local.observer.nic_ips[count.index], cidrhost(data.azurerm_subnet.observer[0].address_prefixes[0], (count.index + 5)))
     private_ip_address_allocation = "static"
   }
@@ -54,7 +48,7 @@ resource "azurerm_linux_virtual_machine" "observer" {
     storage_account_type = "Standard_LRS"
   }
 
-  source_image_id = local.observer_custom_image ? local.observer_os.source_image_id : null
+  source_image_id = local.observer_custom_image ? local.observer_custom_image_id : null
 
   dynamic "source_image_reference" {
     for_each = range(local.observer_custom_image ? 0 : 1)

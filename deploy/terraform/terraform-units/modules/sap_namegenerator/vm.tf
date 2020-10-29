@@ -4,8 +4,8 @@ locals {
   app_oscode      = upper(var.app_ostype) == "LINUX" ? "l" : "w"
   db_platformcode = substr(var.db_platform, 0, 3)
 
-  anchor_server_names = [for idx in range(length(var.zones)) :
-    format("%sanchor%02d%s%s", lower(var.sap_sid), idx, local.app_oscode, local.random_id_vm_verified)
+  anchor_server_names = [for idx in range(length(local.zones)) :
+    format("%sanchor%02d%s%s", lower(var.sap_sid), idx, local.db_oscode, local.random_id_vm_verified)
   ]
 
   deployer_vm_names = [for idx in range(var.deployer_vm_count) :
