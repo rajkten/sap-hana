@@ -37,17 +37,17 @@ resource "azurerm_lb_probe" "anydb" {
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "anydb" {
-  count                   = local.enable_deployment ? length(azurerm_network_interface.anydb) : 0
-  network_interface_id    = azurerm_network_interface.anydb[count.index].id
-  ip_configuration_name   = azurerm_network_interface.anydb[count.index].ip_configuration[0].name
+  count                   = local.enable_deployment ? length(azurerm_network_interface.anydb_db) : 0
+  network_interface_id    = azurerm_network_interface.anydb_db[count.index].id
+  ip_configuration_name   = azurerm_network_interface.anydb_db[count.index].ip_configuration[0].name
   backend_address_pool_id = azurerm_lb_backend_address_pool.anydb[0].id
 }
 
 # AVAILABILITY SET ================================================================================================
 
 resource "azurerm_availability_set" "anydb" {
-  count                        = local.enable_deployment ?  max(length(local.zones),1) : 0
-  name                         = local.zonal_deployment ? format("%s_z%s%s", local.prefix, local.zones[count.index], local.resource_suffixes.db-avset) : format("%s%s", local.prefix, local.resource_suffixes.db-avset)
+  count                        = local.enable_deployment ? max(length(local.zones), 1) : 0
+  name                         = local.zonal_deployment ? format("%s%sz%s%s", local.prefix, var.naming.separator, local.zones[count.index], local.resource_suffixes.db-avset) : format("%s%s", local.prefix, local.resource_suffixes.db-avset)
   location                     = var.resource-group[0].location
   resource_group_name          = var.resource-group[0].name
   platform_update_domain_count = 20
@@ -55,6 +55,8 @@ resource "azurerm_availability_set" "anydb" {
   proximity_placement_group_id = local.zonal_deployment ? var.ppg[count.index % length(local.zones)].id : var.ppg[0].id
   managed                      = true
 }
+
+# VNET ================================================================================================
 
 # Creates db subnet of SAP VNET
 resource "azurerm_subnet" "anydb" {

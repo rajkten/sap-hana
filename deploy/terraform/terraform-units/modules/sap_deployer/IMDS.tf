@@ -27,14 +27,14 @@ resource "null_resource" "IMDS" {
     type        = "ssh"
     host        = azurerm_public_ip.deployer[count.index].ip_address
     user        = local.deployers[count.index].authentication.username
-    private_key = local.deployers[count.index].authentication.type == "key" ? local.deployers[count.index].authentication.sshkey.private_key : null
+    private_key = local.deployers[count.index].authentication.type == "key" ? file(local.deployers[count.index].authentication.sshkey.path_to_private_key) : null
     password    = lookup(local.deployers[count.index].authentication, "password", null)
     timeout     = var.ssh-timeout
   }
 
   provisioner "remote-exec" {
     inline = [
-      "curl --silent --max-time ${var.max_timeout} -i -H \"Metadata: \"true\"\" -H \"user-agent: SAP AutoDeploy/${var.auto-deploy-version}; scenario=${var.scenario}; deploy-status=Terraform_${var.scenario}\" http://169.254.169.254/metadata/instance?api-version=${var.api-version} || true"
+      "curl --silent --output /dev/null --max-time ${var.max_timeout} -i -H \"Metadata: \"true\"\" -H \"user-agent: SAP AutoDeploy/${var.auto-deploy-version}; scenario=${var.scenario}; deploy-status=Terraform_${var.scenario}\" http://169.254.169.254/metadata/instance?api-version=${var.api-version} || true"
     ]
   }
 }

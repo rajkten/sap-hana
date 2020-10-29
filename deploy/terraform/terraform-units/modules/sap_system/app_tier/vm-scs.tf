@@ -1,15 +1,41 @@
 # Create SCS NICs
 resource "azurerm_network_interface" "scs" {
   count                         = local.enable_deployment ? local.scs_server_count : 0
-  name                          = format("%s_%s%s", local.prefix, local.scs_virtualmachine_names[count.index], local.resource_suffixes.nic)
+  name                          = format("%s%s%s%s", local.prefix, var.naming.separator, local.scs_virtualmachine_names[count.index], local.resource_suffixes.nic)
   location                      = var.resource-group[0].location
   resource_group_name           = var.resource-group[0].name
   enable_accelerated_networking = local.scs_sizing.compute.accelerated_networking
 
   ip_configuration {
-    name                          = "IPConfig1"
-    subnet_id                     = local.sub_app_exists ? data.azurerm_subnet.subnet-sap-app[0].id : azurerm_subnet.subnet-sap-app[0].id
-    private_ip_address            = try(local.scs_nic_ips[count.index], cidrhost(local.sub_app_prefix, (tonumber(count.index) * -1 + local.ip_offsets.scs_vm)))
+    name      = "IPConfig1"
+    subnet_id = local.sub_app_exists ? data.azurerm_subnet.subnet-sap-app[0].id : azurerm_subnet.subnet-sap-app[0].id
+    private_ip_address = try(local.scs_nic_ips[count.index],
+      cidrhost(local.sub_app_exists ?
+        data.azurerm_subnet.subnet-sap-app[0].address_prefixes[0] :
+        azurerm_subnet.subnet-sap-app[0].address_prefixes[0],
+        tonumber(count.index) + local.ip_offsets.app_vm
+      )
+    )
+    private_ip_address_allocation = "static"
+  }
+}
+
+// Create Admin NICs
+resource "azurerm_network_interface" "scs_admin" {
+  count                         = local.enable_deployment && local.apptier_dual_nics ? local.scs_server_count : 0
+  name                          = format("%s_%s%s", local.prefix, local.scs_virtualmachine_names[count.index], local.resource_suffixes.admin-nic)
+  location                      = var.resource-group[0].location
+  resource_group_name           = var.resource-group[0].name
+  enable_accelerated_networking = local.app_sizing.compute.accelerated_networking
+
+  ip_configuration {
+    name      = "IPConfig1"
+    subnet_id = var.admin_subnet.id
+    private_ip_address = try(local.scs_admin_nic_ips[count.index],
+      cidrhost(var.admin_subnet.id.address_prefixes[0],
+        tonumber(count.index) + 20
+      )
+    )
     private_ip_address_allocation = "static"
   }
 }
@@ -25,8 +51,8 @@ resource "azurerm_network_interface_backend_address_pool_association" "scs" {
 # Create the SCS Linux VM(s)
 resource "azurerm_linux_virtual_machine" "scs" {
   count               = local.enable_deployment && (upper(local.app_ostype) == "LINUX") ? local.scs_server_count : 0
-  name                = format("%s_%s%s", local.prefix, local.scs_virtualmachine_names[count.index], local.resource_suffixes.vm)
-  computer_name       = local.scs_virtualmachine_names[count.index]
+  name                = format("%s%s%s%s", local.prefix, var.naming.separator, local.scs_virtualmachine_names[count.index], local.resource_suffixes.vm)
+  computer_name       = local.scs_computer_names[count.index]
   location            = var.resource-group[0].location
   resource_group_name = var.resource-group[0].name
 
@@ -44,28 +70,30 @@ resource "azurerm_linux_virtual_machine" "scs" {
     null
   )
 
-  network_interface_ids = [
-    azurerm_network_interface.scs[count.index].id
-  ]
+  network_interface_ids = local.apptier_dual_nics ? (
+    [azurerm_network_interface.scs_admin[count.index].id, azurerm_network_interface.scs[count.index].id]) : (
+    [azurerm_network_interface.scs[count.index].id]
+  )
+  
   size                            = local.scs_sizing.compute.vm_size
   admin_username                  = local.authentication.username
   disable_password_authentication = true
 
   os_disk {
-    name                 = format("%s_%s%s", local.prefix, local.scs_virtualmachine_names[count.index], local.resource_suffixes.osdisk)
+    name                 = format("%s%s%s%s", local.prefix, var.naming.separator, local.scs_virtualmachine_names[count.index], local.resource_suffixes.osdisk)
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
 
-  source_image_id = local.app_custom_image ? local.app_os.source_image_id : null
+  source_image_id = local.scs_custom_image ? local.scs_os.source_image_id : null
 
   dynamic "source_image_reference" {
-    for_each = range(local.app_custom_image ? 0 : 1)
+    for_each = range(local.scs_custom_image ? 0 : 1)
     content {
-      publisher = local.app_os.publisher
-      offer     = local.app_os.offer
-      sku       = local.app_os.sku
-      version   = local.app_os.version
+      publisher = local.scs_os.publisher
+      offer     = local.scs_os.offer
+      sku       = local.scs_os.sku
+      version   = local.scs_os.version
     }
   }
 
@@ -82,8 +110,8 @@ resource "azurerm_linux_virtual_machine" "scs" {
 # Create the SCS Windows VM(s)
 resource "azurerm_windows_virtual_machine" "scs" {
   count               = local.enable_deployment && (upper(local.app_ostype) == "WINDOWS") ? local.scs_server_count : 0
-  name                = format("%s_%s%s", local.prefix, local.scs_virtualmachine_names[count.index], local.resource_suffixes.vm)
-  computer_name       = local.scs_virtualmachine_names[count.index]
+  name                = format("%s%s%s%s", local.prefix, var.naming.separator, local.scs_virtualmachine_names[count.index], local.resource_suffixes.vm)
+  computer_name       = local.scs_computer_names[count.index]
   location            = var.resource-group[0].location
   resource_group_name = var.resource-group[0].name
 
@@ -101,28 +129,30 @@ resource "azurerm_windows_virtual_machine" "scs" {
     null
   )
 
-  network_interface_ids = [
-    azurerm_network_interface.scs[count.index].id
-  ]
+  network_interface_ids = local.apptier_dual_nics ? (
+    [azurerm_network_interface.scs_admin[count.index].id, azurerm_network_interface.scs[count.index].id]) : (
+    [azurerm_network_interface.scs[count.index].id]
+  )
+  
   size           = local.scs_sizing.compute.vm_size
   admin_username = local.authentication.username
   admin_password = local.authentication.password
 
   os_disk {
-    name                 = format("%s_%s%s", local.prefix, local.scs_virtualmachine_names[count.index], local.resource_suffixes.osdisk)
+    name                 = format("%s%s%s%s", local.prefix, var.naming.separator, local.scs_virtualmachine_names[count.index], local.resource_suffixes.osdisk)
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
 
-  source_image_id = local.app_custom_image ? local.app_os.source_image_id : null
+  source_image_id = local.scs_custom_image ? local.scs_os.source_image_id : null
 
   dynamic "source_image_reference" {
-    for_each = range(local.app_custom_image ? 0 : 1)
+    for_each = range(local.scs_custom_image ? 0 : 1)
     content {
-      publisher = local.app_os.publisher
-      offer     = local.app_os.offer
-      sku       = local.app_os.sku
-      version   = local.app_os.version
+      publisher = local.scs_os.publisher
+      offer     = local.scs_os.offer
+      sku       = local.scs_os.sku
+      version   = local.scs_os.version
     }
   }
 
@@ -134,7 +164,7 @@ resource "azurerm_windows_virtual_machine" "scs" {
 # Creates managed data disk
 resource "azurerm_managed_disk" "scs" {
   count                = local.enable_deployment ? length(local.scs-data-disks) : 0
-  name                 = format("%s_%s%s", local.prefix, local.scs_virtualmachine_names[count.index], local.scs-data-disks[count.index].suffix)
+  name                 = format("%s%s%s%s", local.prefix, var.naming.separator, local.scs_virtualmachine_names[count.index], local.scs-data-disks[count.index].suffix)
   location             = var.resource-group[0].location
   resource_group_name  = var.resource-group[0].name
   create_option        = "Empty"
