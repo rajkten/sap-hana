@@ -1,14 +1,14 @@
 ### <img src="../../../../documentation/SAP_Automation_on_Azure/assets/images/UnicornSAPBlack256x256.png" width="64px"> SAP Automation > V1.x.x <!-- omit in toc -->
 # Bootstrap - SAP Library <!-- omit in toc -->
 
-Master Branch's status: [![Build Status](https://dev.azure.com/azuresaphana/Azure-SAP-HANA/_apis/build/status/Azure.sap-hana?branchName=master&api-version=5.1-preview.1)](https://dev.azure.com/azuresaphana/Azure-SAP-HANA/_build/latest?definitionId=6&branchName=master)
-
 <br>
 
 ## Table of contents <!-- omit in toc -->
 
 - [Overview](#overview)
+- [Notes](#notes)
 - [Procedure](#procedure)
+  - [Bootstrap - SAP Library](#bootstrap---sap-library)
 
 <br>
 
@@ -25,7 +25,30 @@ Master Branch's status: [![Build Status](https://dev.azure.com/azuresaphana/Azur
 
 <br/><br/>
 
+## Notes
+
+- For the workshop the *default* naming convention is referenced and used. For the **SAP Library** there are three fields.
+  - `<ENV>`-`<REGION>`-SAP_LIBRARY
+
+    | Field             | Legnth   | Value  |
+    | ----------------- | -------- | ------ |
+    | `<ENV>`           | [5 CHAR] | NP     |
+    | `<REGION>`        | [4 CHAR] | EUS2   |
+  
+    Which becomes this: **NP-EUS2-SAP_LIBRARY**
+    
+    This is used in several places:
+    - The path of the Workspace Directory.
+    - Input JSON file name
+    - Resource Group Name.
+
+    You will also see elements cascade into other places.
+
+<br/><br/>
+
 ## Procedure
+
+### Bootstrap - SAP Library
 
 <br/>
 
@@ -37,26 +60,25 @@ Master Branch's status: [![Build Status](https://dev.azure.com/azuresaphana/Azur
         git checkout feature/keyvault
         ```
 
-    2. Verify Branch is at expected Revision: `173b8b522e4e5b932a614cf13a20a07e859e4329`
+    2. Verify Branch is at expected Revision.
         ```bash
         git rev-parse HEAD
         ```
-
-<br>
+        <br>
 
 2. Create Working Directory.
+    <br/>*`Observe Naming Convention`*<br/>
     ```bash
     mkdir -p ~/Azure_SAP_Automated_Deployment/WORKSPACES/SAP_LIBRARY/NP-EUS2-SAP_LIBRARY; cd $_
     ```
-
-<br>
+    <br>
 
 3. Create input parameter [JSON](templates/NP-EUS2-SAP_LIBRARY.json)
+    <br/>*`Observe Naming Convention`*<br/>
     ```bash
     vi NP-EUS2-SAP_LIBRARY.json
     ```
-
-<br>
+    <br>
 
 4. Terraform
     1. Initialization
@@ -65,6 +87,7 @@ Master Branch's status: [![Build Status](https://dev.azure.com/azuresaphana/Azur
        ```
 
     2. Plan
+       <br/>*`Observe Naming Convention`*<br/>
        ```bash
        terraform plan                                                                  \
                        --var-file=NP-EUS2-SAP_LIBRARY.json                             \
@@ -72,7 +95,7 @@ Master Branch's status: [![Build Status](https://dev.azure.com/azuresaphana/Azur
        ```
 
     3. Apply
-       <br/>
+       <br/>*`Observe Naming Convention`*<br/>
        *This step deploys the resources*
        ```bash
        terraform apply --auto-approve                                                  \
