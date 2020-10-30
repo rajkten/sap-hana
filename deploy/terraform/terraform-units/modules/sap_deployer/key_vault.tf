@@ -112,7 +112,7 @@ resource "tls_private_key" "deployer" {
 */
 
 resource "azurerm_key_vault_secret" "ppk" {
-  depends_on   = [azurerm_key_vault_access_policy.kv_user_pre_deployer[0]]
+  depends_on   = [azurerm_key_vault_access_policy.kv_user_pre_deployer]
   count        = (local.enable_deployers && local.enable_key) ? 1 : 0
   name         = format("%s-sshkey", local.prefix)
   value        = local.private_key
@@ -120,7 +120,7 @@ resource "azurerm_key_vault_secret" "ppk" {
 }
 
 resource "azurerm_key_vault_secret" "pk" {
-  depends_on   = [azurerm_key_vault_access_policy.kv_user_pre_deployer[0]]
+  depends_on   = [azurerm_key_vault_access_policy.kv_user_pre_deployer]
   count        = (local.enable_deployers && local.enable_key) ? 1 : 0
   name         = format("%s-sshkey-pub", local.prefix)
   value        = local.public_key
