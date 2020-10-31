@@ -9,6 +9,8 @@ vault_name=${user_vault_name}
 ppk_name=${ppk_name}
 if [ ! -z $${ppk_name} ]
 then
+  printf "%s\n" "Assign access policy to the logged identity"
+  az keyvault set-policy --name $${vault_name} --object-id $${object_id} --secret-permissions delete get list set
   printf "%s\n" "Collecting secrets from KV"
   ppk=$(az keyvault secret show --vault-name $${vault_name} --name $${ppk_name} | jq -r .value)
   echo "$${ppk}" > $${temp_file}
