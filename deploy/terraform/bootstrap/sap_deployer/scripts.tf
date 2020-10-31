@@ -12,8 +12,11 @@ resource "local_file" "scp" {
     pwd_name        = module.sap_deployer.pwd_name,
     deployers       = module.sap_deployer.deployers,
     deployer-ips    = module.sap_deployer.deployer_pip[*].ip_address
+    object_id       = data.azurerm_client_config.deployer.object_id
   })
   filename             = "${path.cwd}/post_deployment.sh"
   file_permission      = "0770"
   directory_permission = "0770"
 }
+
+data "azurerm_client_config" "deployer" {}
