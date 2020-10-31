@@ -41,9 +41,14 @@ variable "region_mapping" {
     koreasouth         = "koso"
   }
 }
+variable "kv_id" {
+
+}
 
 // Set defaults
 locals {
+
+  kv_id = var.ky_id
 
   // Post fix for all deployed resources
   postfix = random_id.deployer.hex

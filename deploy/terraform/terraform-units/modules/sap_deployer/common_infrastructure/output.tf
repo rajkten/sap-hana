@@ -54,16 +54,16 @@ output "prvt_vault_name" {
 
 // output the secret name of public key
 output "ppk_name" {
-  value = local.enable_deployers && local.enable_key ? azurerm_key_vault_secret.ppk[0].name : ""
+  value = ""
 }
 
 // output the secret name of private key
 output "pk_name" {
-  value = local.enable_deployers && local.enable_key ? azurerm_key_vault_secret.pk[0].name : ""
+  value = ""
 }
 
 output "pwd_name" {
-  value = local.enable_deployers && local.enable_password ? azurerm_key_vault_secret.pwd[0].name : ""
+  value = ""
 }
 
 // Comment out code with users.object_id for the time being.
