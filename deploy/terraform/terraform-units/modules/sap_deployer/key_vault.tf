@@ -28,7 +28,6 @@ resource "azurerm_key_vault_access_policy" "kv_prvt_msi" {
 
 // Create user KV with access policy
 resource "azurerm_key_vault" "kv_user" {
-  depends_on                 = [azurerm_key_vault_access_policy.kv_user_pre_deployer]
   count                      = local.enable_deployers ? 1 : 0
   name                       = format("%suser%s", local.kv_prefix, upper(substr(local.postfix, 0, 3)))
   location                   = azurerm_resource_group.deployer[0].location
