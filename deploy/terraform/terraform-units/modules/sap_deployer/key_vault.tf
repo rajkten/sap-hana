@@ -28,7 +28,6 @@ resource "azurerm_key_vault_access_policy" "kv_prvt_msi" {
 
 // Create user KV with access policy
 resource "azurerm_key_vault" "kv_user" {
-  count                      = local.enable_deployers ? 1 : 0
   name                       = format("%suser%s", local.kv_prefix, upper(substr(local.postfix, 0, 3)))
   location                   = azurerm_resource_group.deployer[0].location
   resource_group_name        = azurerm_resource_group.deployer[0].name
@@ -38,8 +37,11 @@ resource "azurerm_key_vault" "kv_user" {
   purge_protection_enabled   = true
 
   sku_name = "standard"
+}
 
-  access_policy {
+resource "azurerm_key_vault_access_policy" "kv_user_msi" {
+  count        = local.enable_deployers ? 1 : 0
+  key_vault_id = azurerm_key_vault.kv_user.id
 
   tenant_id = data.azurerm_client_config.deployer.tenant_id
   object_id = azurerm_user_assigned_identity.deployer.principal_id
@@ -50,8 +52,27 @@ resource "azurerm_key_vault" "kv_user" {
     "list",
     "set",
   ]
-  }
+}
 
+resource "azurerm_key_vault_access_policy" "kv_user_pre_deployer" {
+  key_vault_id = azurerm_key_vault.kv_user.id
+  tenant_id = data.azurerm_client_config.deployer.tenant_id
+  object_id = "559c5fe7-d662-42ce-8464-1bfb267eb23a"
+  application_id = "b45a46d9-212b-490c-89e3-987bba1b4ec6"
+
+  secret_permissions = [
+    "delete",
+    "get",
+    "list",
+    "set",
+  ]
+
+  # lifecycle {
+  #   ignore_changes = [
+  #     // Ignore changes to object_id
+  #     object_id,
+  #   ]
+  # }
 }
 
 // Comment out code with users.object_id for the time being.
@@ -92,14 +113,16 @@ resource "azurerm_key_vault_secret" "ppk" {
   count        = (local.enable_deployers && local.enable_key) ? 1 : 0
   name         = format("%s-sshkey", local.prefix)
   value        = local.private_key
-  key_vault_id = azurerm_key_vault.kv_user[0].id
+  key_vault_id = azurerm_key_vault.kv_user.id
+  depends_on   = [azurerm_key_vault_access_policy.kv_user_pre_deployer]
 }
 
 resource "azurerm_key_vault_secret" "pk" {
   count        = (local.enable_deployers && local.enable_key) ? 1 : 0
   name         = format("%s-sshkey-pub", local.prefix)
   value        = local.public_key
-  key_vault_id = azurerm_key_vault.kv_user[0].id
+  key_vault_id = azurerm_key_vault.kv_user.id
+  depends_on   = [azurerm_key_vault_access_policy.kv_user_pre_deployer]
 }
 
 // Generate random password if password is set as authentication type, and save in KV
@@ -118,5 +141,6 @@ resource "azurerm_key_vault_secret" "pwd" {
   count        = (local.enable_deployers && local.enable_password) ? 1 : 0
   name         = format("%s-password", local.prefix)
   value        = local.password
-  key_vault_id = azurerm_key_vault.kv_user[0].id
+  key_vault_id = azurerm_key_vault.kv_user.id
+  depends_on   = [azurerm_key_vault_access_policy.kv_user_pre_deployer]
 }

@@ -45,7 +45,7 @@ output "deployers" {
 }
 
 output "user_vault_name" {
-  value = azurerm_key_vault.kv_user[0].name
+  value = azurerm_key_vault.kv_user.name
 }
 
 output "prvt_vault_name" {
@@ -74,7 +74,7 @@ output "deployer_user" {
 */
 
 output "deployer_kv_user_arm_id" {
-  value = local.enable_deployers ? azurerm_key_vault.kv_user[0].id : ""
+  value = local.enable_deployers ? azurerm_key_vault.kv_user.id : ""
 }
 
 output "deployer_public_ip_address" {
