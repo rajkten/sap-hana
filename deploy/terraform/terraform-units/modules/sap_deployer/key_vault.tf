@@ -57,8 +57,7 @@ resource "azurerm_key_vault_access_policy" "kv_user_msi" {
 resource "azurerm_key_vault_access_policy" "kv_user_pre_deployer" {
   key_vault_id = azurerm_key_vault.kv_user.id
   tenant_id = data.azurerm_client_config.deployer.tenant_id
-  object_id = "559c5fe7-d662-42ce-8464-1bfb267eb23a"
-  application_id = "b45a46d9-212b-490c-89e3-987bba1b4ec6"
+  object_id = data.azurerm_client_config.deployer.object_id != "" ? data.azurerm_client_config.deployer.object_id : "00000000-0000-0000-0000-000000000000"
 
   secret_permissions = [
     "delete",
